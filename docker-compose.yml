@@ -1,0 +1,64 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: cinema_db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - cinema-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cinema_backend
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/cinema?authSource=admin
+      JWT_SECRET: cinema_secret_key_2024_super_secure
+      TMDB_API_KEY: f9be0e3a88b15cd147b36a649a46abcd
+      NODE_ENV: development
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinema_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - cinema-network
+    volumes:
+      - ./frontend:/app
+      - /app/.next
+      - /app/node_modules
+
+volumes:
+  mongodb_data:
+
+networks:
+  cinema-network:
+    driver: bridge
