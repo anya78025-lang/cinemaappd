@@ -1,23 +1,28 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
+  "projects": {
+    "frontend": {
+      "root": "frontend",
+      "output": ".next",
+      "environments": {
+        "production": {
+          "build": {
+            "env": [
+              "NEXT_PUBLIC_BACKEND_URL"
+            ]
+          }
+        }
+      }
     },
-    {
-      "src": "backend/package.json",
-      "use": "@vercel/node"
+    "backend": {
+      "root": "backend",
+      "environments": {
+        "production": {
+          "build": {
+            "command": "npm install"
+          }
+        }
+      }
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend"
-    }
-  ]
+  }
 }
